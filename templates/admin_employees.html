@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
-                    <i class="fas fa-plus me-2"></i>Add New Employee
-                </button>loyees - CAD Work Tracker{% endblock %}
+{% block title %}Employees - CAD Work Tracker{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -46,7 +44,7 @@
                 <h1 class="h2">
                     <i class="fas fa-users me-2"></i>Employee Management
                 </h1>
-                <button class="btn btn-primary" onclick="alert('Add employee functionality coming soon!')">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
                     <i class="fas fa-user-plus me-2"></i>Add New Employee
                 </button>
             </div>
@@ -168,19 +166,175 @@
     </div>
 </div>
 
+<!-- Add Employee Modal -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_employee') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Employee ID</label>
+                            <input type="text" name="emp_id" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">First Name</label>
+                            <input type="text" name="first_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" name="last_name" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Department</label>
+                            <input type="text" name="department" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role</label>
+                            <input type="text" name="role" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password</label>
+                            <input type="text" name="password" class="form-control" placeholder="firstname@321" required>
+                        </div>
+                        <div class="col-12 form-check ms-2 mt-2">
+                            <input class="form-check-input" type="checkbox" name="is_admin" id="addIsAdmin">
+                            <label class="form-check-label" for="addIsAdmin">Administrator</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="POST" id="editEmployeeForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Employee ID</label>
+                            <input type="text" id="edit_emp_id" class="form-control" disabled>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">First Name</label>
+                            <input type="text" name="first_name" id="edit_first_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" name="last_name" id="edit_last_name" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" id="edit_username" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" id="edit_email" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Department</label>
+                            <input type="text" name="department" id="edit_department" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role</label>
+                            <input type="text" name="role" id="edit_role" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">New Password (leave blank to keep)</label>
+                            <input type="text" name="password" id="edit_password" class="form-control" placeholder="(unchanged)">
+                        </div>
+                        <div class="col-12 form-check ms-2 mt-2">
+                            <input class="form-check-input" type="checkbox" name="is_admin" id="edit_is_admin">
+                            <label class="form-check-label" for="edit_is_admin">Administrator</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 function editEmployee(empId) {
-    alert('Edit employee functionality will be implemented in the next version.\n\nEmployee ID: ' + empId);
+    // Find the row data from table (simple inline extraction)
+    const row = [...document.querySelectorAll('table tbody tr')].find(r => r.querySelector('td small')?.innerText === empId);
+    if(!row) return;
+    const cells = row.querySelectorAll('td');
+    // cells structure: [emp badge, name block, email, department, role, type, actions]
+    document.getElementById('edit_emp_id').value = empId;
+    const nameParts = cells[0].innerText.trim().split(/\s+/); // fallback if needed
+    document.getElementById('edit_first_name').value = cells[0].querySelector('strong')?.innerText.split(' ')[0] || '';
+    document.getElementById('edit_last_name').value = cells[0].querySelector('strong')?.innerText.split(' ').slice(1).join(' ') || '';
+    document.getElementById('edit_username').value = cells[0].querySelector('small')?.innerText || '';
+    document.getElementById('edit_email').value = cells[1].innerText.trim();
+    document.getElementById('edit_department').value = cells[2].innerText.trim();
+    document.getElementById('edit_role').value = cells[3].innerText.trim();
+    const isAdmin = cells[4].innerText.includes('Admin');
+    document.getElementById('edit_is_admin').checked = isAdmin;
+    document.getElementById('editEmployeeForm').action = `/admin/employees/edit/${empId}`;
+    const modal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+    modal.show();
 }
 
 function viewEmployeeProgress(empId) {
-    alert('Employee progress view functionality will be implemented in the next version.\n\nEmployee ID: ' + empId);
+    window.location = `/admin/reports?employee=${empId}`;
 }
 
 function resetPassword(empId) {
-    if (confirm('Are you sure you want to reset the password for this employee?')) {
-        alert('Password reset functionality will be implemented in the next version.\n\nEmployee ID: ' + empId);
+    if(!confirm('Reset password to firstname@321 ?')) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/employees/edit/${empId}`;
+    // Minimal submission: fetch current row details then send with new password
+    const row = [...document.querySelectorAll('table tbody tr')].find(r => r.querySelector('td small')?.innerText === empId);
+    if(!row) return;
+    const strong = row.querySelector('strong').innerText.split(' ');
+    const first = strong[0];
+    const last = strong.slice(1).join(' ');
+    const email = row.querySelector('a').innerText.trim();
+    const dept = row.querySelectorAll('td')[2].innerText.trim();
+    const role = row.querySelectorAll('td')[3].innerText.trim();
+    const isAdmin = row.querySelectorAll('td')[4].innerText.includes('Admin');
+    const fields = {
+        first_name:first,last_name:last,username:empId,email:email,department:dept,role:role,password:`${first.toLowerCase()}@321`,is_admin:isAdmin? 'on': ''
+    };
+    for(const k in fields){
+        const input = document.createElement('input');
+        input.type='hidden';
+        input.name=k;
+        input.value=fields[k];
+        form.appendChild(input);
     }
+    document.body.appendChild(form);
+    form.submit();
 }
 </script>
 {% endblock %}

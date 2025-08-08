@@ -247,7 +247,7 @@
                     <h5 class="mb-0">Top Projects by Work Percentage</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="projectAllocationChart"></canvas>
+                    <canvas id="projectWorkPercentageChart"></canvas>
                 </div>
             </div>
         </div>
@@ -317,8 +317,8 @@ new Chart(employeeCtx, {
     }
 });
 
-// Project Allocation Chart
-const projectCtx = document.getElementById('projectAllocationChart').getContext('2d');
+// Project Work Percentage Chart
+const projectCtx = document.getElementById('projectWorkPercentageChart').getContext('2d');
 new Chart(projectCtx, {
     type: 'bar',
     data: {
