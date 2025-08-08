@@ -1,0 +1,57 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Admin Reports - CAD Work Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2">
+                <i class="fas fa-chart-bar me-2"></i>Progress Reports
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Work Progress Data</h5>
+                </div>
+                <div class="card-body">
+                    {% if reports %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Project</th>
+                                        <th>Client</th>
+                                        <th>Month/Year</th>
+                                        <th>Progress %</th>
+                                        <th>Submitted</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in reports %}
+                                    <tr>
+                                        <td>{{ item.first_name }} {{ item.last_name }}</td>
+                                        <td>{{ item.project_name }}</td>
+                                        <td>{{ item.client }}</td>
+                                        <td>{{ item.month }} {{ item.year }}</td>
+                                        <td>{{ item.percentage }}%</td>
+                                        <td>{{ item.submission_date }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Database Management - CAD Work Tracker Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-database me-2"></i>Database Management
+            </h2>
+        </div>
+    </div>
+
+    <!-- Database Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Employees</h6>
+                            <h3>{{ stats.total_employees }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Projects</h6>
+                            <h3>{{ stats.total_projects }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-project-diagram fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Progress Entries</h6>
+                            <h3>{{ stats.total_progress_entries }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Database Size</h6>
+                            <h3>{{ "%.2f"|format(stats.database_size / 1024) }} KB</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-hdd fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database Operations -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Database Operations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('backup_database') }}" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Create Backup
+                        </a>
+                        <a href="{{ url_for('export_database_json') }}" class="btn btn-info">
+                            <i class="fas fa-file-export me-2"></i>Export to JSON
+                        </a>
+                        <a href="{{ url_for('cleanup_database') }}" class="btn btn-warning" 
+                           onclick="return confirm('This will remove duplicate entries. Continue?')">
+                            <i class="fas fa-broom me-2"></i>Cleanup Database
+                        </a>
+                        <a href="{{ url_for('integrity_check') }}" class="btn btn-secondary">
+                            <i class="fas fa-check-circle me-2"></i>Integrity Check
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Dangerous Operations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <form method="POST" action="{{ url_for('clear_progress_data') }}" style="display: inline;">
+                            <button type="submit" class="btn btn-outline-warning w-100" 
+                                    onclick="return confirm('This will delete ALL work progress data. This action cannot be undone. Continue?')">
+                                <i class="fas fa-trash me-2"></i>Clear Progress Data
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('reset_sample_data') }}" style="display: inline;">
+                            <button type="submit" class="btn btn-outline-info w-100" 
+                                    onclick="return confirm('This will reset all data to sample data. Current data will be backed up. Continue?')">
+                                <i class="fas fa-redo me-2"></i>Reset to Sample Data
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('wipe_database') }}" style="display: inline;">
+                            <button type="submit" class="btn btn-outline-danger w-100" 
+                                    onclick="return confirm('This will DELETE ALL DATA except admin user. This action cannot be undone. Are you absolutely sure?')">
+                                <i class="fas fa-bomb me-2"></i>Wipe Database
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Management -->
+    {% if backup_files %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-archive me-2"></i>Backup Files</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Filename</th>
+                                    <th>Size</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for backup in backup_files %}
+                                <tr>
+                                    <td><code>{{ backup.name }}</code></td>
+                                    <td>{{ "%.1f"|format(backup.size / 1024) }} KB</td>
+                                    <td>{{ backup.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <form method="POST" action="{{ url_for('restore_database', filename=backup.name) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-success" 
+                                                        onclick="return confirm('This will restore the database from this backup. Current database will be backed up first. Continue?')">
+                                                    <i class="fas fa-upload me-1"></i>Restore
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('delete_backup', filename=backup.name) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" 
+                                                        onclick="return confirm('Delete this backup file?')">
+                                                    <i class="fas fa-trash me-1"></i>Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Data Integrity</h5>
+                </div>
+                <div class="card-body">
+                    {% if orphaned_progress > 0 %}
+                        <div class="alert alert-warning">
+                            <strong>Warning:</strong> {{ orphaned_progress }} orphaned progress entries found.
+                            Consider running database cleanup.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <strong>Good:</strong> No data integrity issues found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Submissions</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_submissions %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Month/Year</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for submission in recent_submissions %}
+                                    <tr>
+                                        <td>{{ submission.first_name }} {{ submission.last_name }}</td>
+                                        <td>{{ submission.month }} {{ submission.year }}</td>
+                                        <td>{{ submission.submission_date }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No recent submissions found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-archive me-2"></i>Available Backups</h5>
+                </div>
+                <div class="card-body">
+                    {% if backup_files %}
+                        <div class="list-group">
+                            {% for backup in backup_files[:5] %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ backup }}</span>
+                                <small class="text-muted">Backup</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if backup_files|length > 5 %}
+                            <small class="text-muted">... and {{ backup_files|length - 5 }} more backups</small>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">No backup files found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="row">
+        <div class="col-12">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

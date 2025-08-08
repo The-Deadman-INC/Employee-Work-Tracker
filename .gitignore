@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+*.db-journal
+instance/
+.env
+venv/
+.env.*
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Backups
+backups/*.db
+backups/*.json
+
+# Reports/exports
+exports/
+
+# Bytecode cache
+.pytest_cache/
+
+# Coverage
+htmlcov/
+.coverage*
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Temp
+*.tmp
+*.bak
+~$*

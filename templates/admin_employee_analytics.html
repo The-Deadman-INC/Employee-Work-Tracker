@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Analytics - CAD Work Tracker Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-user-chart me-2"></i>Employee Analytics
+            </h2>
+        </div>
+    </div>
+
+    <!-- Department Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-building me-2"></i>Department Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for dept in department_summary %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{{ dept.department or 'Unassigned' }}</h5>
+                                    <p class="card-text">
+                                        <strong>{{ dept.employee_count }}</strong> employees<br>
+                                        <small class="text-muted">
+                                            Avg Workload: {{ "%.1f"|format(dept.avg_workload or 0) }}%
+                                        </small>
+                                    </p>
+                                    <span class="badge bg-info">{{ dept.total_submissions or 0 }} submissions</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Performance Analysis -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Employee Performance Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="employeeAnalyticsTable">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Role</th>
+                                    <th>Total Submissions</th>
+                                    <th>Avg Workload</th>
+                                    <th>Projects Worked</th>
+                                    <th>Months Active</th>
+                                    <th>First Submission</th>
+                                    <th>Last Submission</th>
+                                    <th>Performance Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in employee_analytics %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ employee.first_name }} {{ employee.last_name }}</strong><br>
+                                        <small class="text-muted">{{ employee.emp_id }}</small>
+                                    </td>
+                                    <td>{{ employee.department }}</td>
+                                    <td>{{ employee.role }}</td>
+                                    <td>{{ employee.total_submissions or 0 }}</td>
+                                    <td>
+                                        {% if employee.avg_workload %}
+                                            {{ "%.1f"|format(employee.avg_workload) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ employee.projects_worked or 0 }}</td>
+                                    <td>{{ employee.months_active or 0 }}</td>
+                                    <td>
+                                        {% if employee.first_submission %}
+                                            {{ employee.first_submission }}
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if employee.last_submission %}
+                                            {{ employee.last_submission }}
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set score = (employee.total_submissions or 0) * 10 + (employee.projects_worked or 0) * 5 %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar 
+                                                {% if score > 100 %}bg-success
+                                                {% elif score > 50 %}bg-warning
+                                                {% else %}bg-danger{% endif %}" 
+                                                role="progressbar" 
+                                                style="width: {{ [score, 100]|min }}%">
+                                                {{ score }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Submission Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="submissionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Department Workload</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="departmentChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performers -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>Most Active Employees</h5>
+                </div>
+                <div class="card-body">
+                    {% for employee in employee_analytics|sort(attribute='total_submissions', reverse=true)[:5] %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ employee.first_name }} {{ employee.last_name }}</strong><br>
+                            <small class="text-muted">{{ employee.department }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">{{ employee.total_submissions or 0 }} submissions</span>
+                        </div>
+                    </div>
+                    {% if not loop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Most Versatile Employees</h5>
+                </div>
+                <div class="card-body">
+                    {% for employee in employee_analytics|sort(attribute='projects_worked', reverse=true)[:5] %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ employee.first_name }} {{ employee.last_name }}</strong><br>
+                            <small class="text-muted">{{ employee.department }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-info">{{ employee.projects_worked or 0 }} projects</span>
+                        </div>
+                    </div>
+                    {% if not loop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="row">
+        <div class="col-12">
+            <a href="{{ url_for('admin_employees') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Employees
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Submission Distribution Chart
+    const employees = {{ employee_analytics|tojson }};
+    const submissionRanges = ['0', '1-3', '4-6', '7-10', '10+'];
+    const submissionCounts = [0, 0, 0, 0, 0];
+    
+    employees.forEach(emp => {
+        const submissions = emp.total_submissions || 0;
+        if (submissions === 0) submissionCounts[0]++;
+        else if (submissions <= 3) submissionCounts[1]++;
+        else if (submissions <= 6) submissionCounts[2]++;
+        else if (submissions <= 10) submissionCounts[3]++;
+        else submissionCounts[4]++;
+    });
+    
+    new Chart(document.getElementById('submissionChart'), {
+        type: 'doughnut',
+        data: {
+            labels: submissionRanges,
+            datasets: [{
+                data: submissionCounts,
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Department Workload Chart
+    const departments = {{ department_summary|tojson }};
+    
+    new Chart(document.getElementById('departmentChart'), {
+        type: 'bar',
+        data: {
+            labels: departments.map(d => d.department || 'Unassigned'),
+            datasets: [{
+                label: 'Average Workload %',
+                data: departments.map(d => d.avg_workload || 0),
+                backgroundColor: '#36A2EB'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Average Workload %'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // DataTable for employee analytics
+    if (typeof $ !== 'undefined' && $.fn.DataTable) {
+        $('#employeeAnalyticsTable').DataTable({
+            pageLength: 25,
+            order: [[3, 'desc']], // Sort by Total Submissions
+            columnDefs: [
+                { targets: [3, 4, 5, 6], className: 'text-center' }
+            ]
+        });
+    }
+});
+</script>
+{% endblock %}

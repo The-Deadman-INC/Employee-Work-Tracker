@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Project Analytics - CAD Work Tracker Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-chart-bar me-2"></i>Project Analytics
+            </h2>
+        </div>
+    </div>
+
+    <!-- Project Utilization Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Project Utilization Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="projectAnalyticsTable">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Client</th>
+                                    <th>Status</th>
+                                    <th>Total Allocations</th>
+                                    <th>Avg Allocation %</th>
+                                    <th>Total %</th>
+                                    <th>Unique Employees</th>
+                                    <th>Months Active</th>
+                                    <th>Utilization Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in project_analytics %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ project.name }}</strong><br>
+                                        <small class="text-muted">{{ project.proj_id }}</small>
+                                    </td>
+                                    <td>{{ project.client }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if project.status == 'Active' else 'secondary' }}">
+                                            {{ project.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ project.total_allocations or 0 }}</td>
+                                    <td>
+                                        {% if project.avg_allocation %}
+                                            {{ "%.1f"|format(project.avg_allocation) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if project.total_percentage %}
+                                            {{ "%.1f"|format(project.total_percentage) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ project.unique_employees or 0 }}</td>
+                                    <td>{{ project.months_active or 0 }}</td>
+                                    <td>
+                                        {% set score = (project.total_percentage or 0) / 100 * (project.unique_employees or 0) %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar 
+                                                {% if score > 50 %}bg-success
+                                                {% elif score > 20 %}bg-warning
+                                                {% else %}bg-danger{% endif %}" 
+                                                role="progressbar" 
+                                                style="width: {{ (score / 100 * 100)|round }}%">
+                                                {{ "%.1f"|format(score) }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Trends Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Monthly Project Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyTrendsChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Comparison -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Performing Projects</h5>
+                </div>
+                <div class="card-body">
+                    {% for project in project_analytics[:5] %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ project.name[:30] }}{% if project.name|length > 30 %}...{% endif %}</strong><br>
+                            <small class="text-muted">{{ project.client }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">{{ "%.1f"|format(project.total_percentage or 0) }}%</span>
+                        </div>
+                    </div>
+                    {% if not loop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Most Collaborative Projects</h5>
+                </div>
+                <div class="card-body">
+                    {% for project in project_analytics|sort(attribute='unique_employees', reverse=true)[:5] %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ project.name[:30] }}{% if project.name|length > 30 %}...{% endif %}</strong><br>
+                            <small class="text-muted">{{ project.client }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-info">{{ project.unique_employees or 0 }} employees</span>
+                        </div>
+                    </div>
+                    {% if not loop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="row">
+        <div class="col-12">
+            <a href="{{ url_for('admin_projects') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Projects
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Trends Chart
+    const monthlyData = {{ monthly_trends|tojson }};
+    
+    // Process data for chart
+    const months = [...new Set(monthlyData.map(item => `${item.month} ${item.year}`))];
+    const projects = [...new Set(monthlyData.map(item => item.project_name))];
+    
+    const datasets = projects.slice(0, 8).map((project, index) => {
+        const colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+        ];
+        
+        const data = months.map(month => {
+            const entry = monthlyData.find(item => 
+                `${item.month} ${item.year}` === month && item.project_name === project
+            );
+            return entry ? entry.total_allocation : 0;
+        });
+        
+        return {
+            label: project.length > 20 ? project.substring(0, 20) + '...' : project,
+            data: data,
+            borderColor: colors[index % colors.length],
+            backgroundColor: colors[index % colors.length] + '20',
+            fill: false,
+            tension: 0.1
+        };
+    });
+    
+    new Chart(document.getElementById('monthlyTrendsChart'), {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Total Allocation %'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+    
+    // DataTable for project analytics
+    if (typeof $ !== 'undefined' && $.fn.DataTable) {
+        $('#projectAnalyticsTable').DataTable({
+            pageLength: 25,
+            order: [[5, 'desc']], // Sort by Total %
+            columnDefs: [
+                { targets: [3, 4, 5, 6, 7], className: 'text-center' }
+            ]
+        });
+    }
+});
+</script>
+{% endblock %}

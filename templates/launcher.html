@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}CAD Work Tracker - Welcome{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-primary">
+                    <i class="fas fa-drafting-compass me-3"></i>
+                    CAD Work Tracker
+                </h1>
+                <p class="lead text-muted">Professional Work Percentage Management System</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user-shield fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="card-title">Admin Login</h5>
+                            <p class="card-text">Access administrative features, view reports, manage projects and employees.</p>
+                            <a href="{{ url_for('admin_login') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Admin Access
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user fa-3x text-success"></i>
+                            </div>
+                            <h5 class="card-title">Employee Login</h5>
+                            <p class="card-text">Submit monthly work percentage, view personal dashboard and progress.</p>
+                            <a href="{{ url_for('employee_login') }}" class="btn btn-success btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Employee Access
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-info-circle me-2"></i>System Features
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success me-2"></i>Monthly Work Percentage Tracking</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Real-time Dashboards</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success me-2"></i>Advanced Reports</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Project Management</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success me-2"></i>Employee Management</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Database Administration</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

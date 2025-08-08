@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Dashboard - CAD Work Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Welcome Message -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-success" role="alert">
+                <h4 class="alert-heading">
+                    <i class="fas fa-user me-2"></i>Welcome, {{ session.user_name }}!
+                </h4>
+                <p class="mb-0">You are submitting work progress for <strong>{{ current_month }} {{ current_year }}</strong> (previous month).</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Data Warning -->
+    {% if has_submitted_data %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Data Already Submitted:</strong> You have already submitted your work progress for {{ current_month }} {{ current_year }}.
+                {% if submission_date %}Submitted on: {{ submission_date }}{% endif %}
+                <br><strong>Total Submitted:</strong> {{ total_percentage }}%
+                <br><em>No further submissions are allowed for this month.</em>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">
+                    <i class="fas fa-chart-line me-2"></i>Work Progress Entry
+                </h1>
+                <div class="text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>Reporting Period: {{ current_month }} {{ current_year }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('submit_progress') }}" id="progressForm">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tasks me-2"></i>Monthly Progress Entry - {{ current_month }} {{ current_year }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            {% if has_submitted_data %}
+                                <strong>View Only:</strong> You have already submitted your progress for {{ current_month }} {{ current_year }}.
+                                The form below shows your submitted data and is now locked.
+                            {% else %}
+                                <strong>Important:</strong> Total work percentage must equal exactly <strong>100%</strong> across all projects.
+                                Enter the actual work completed during {{ current_month }} {{ current_year }}.
+                            {% endif %}
+                        </div>
+
+                        <!-- Progress Total Display -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h3 id="totalProgress" class="text-primary">{{ total_percentage|default(0.0) }}%</h3>
+                                        <p class="mb-0">Total Progress</p>
+                                        <small id="progressStatus" class="text-muted">
+                                            {% if has_submitted_data %}Submitted and Locked{% else %}Must equal 100%{% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if projects %}
+                            <div class="row">
+                                {% for project in projects %}
+                                <div class="col-lg-6 mb-4">
+                                    <div class="card progress-card h-100">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">
+                                                <span class="badge bg-secondary me-2">{{ project.proj_id }}</span>
+                                                {{ project.name[:30] }}{% if project.name|length > 30 %}...{% endif %}
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted small mb-3">
+                                                <strong>Client:</strong> {{ project.client }}<br>
+                                                <strong>Timeline:</strong> {{ project.start_date }} to {{ project.end_date }}
+                                            </p>
+                                            
+                                            <div class="mb-3">
+                                                <label for="progress_{{ project.proj_id }}" class="form-label">
+                                                    Work Completion Percentage
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number"
+                                                           class="form-control progress-input"
+                                                           id="progress_{{ project.proj_id }}"
+                                                           name="progress_{{ project.proj_id }}"
+                                                           min="0"
+                                                           max="100"
+                                                           step="0.1"
+                                                           value="{{ progress[project.proj_id] if progress[project.proj_id] else '' }}"
+                                                           placeholder="0.0"
+                                                           {% if has_submitted_data %}disabled readonly{% endif %}>
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Progress Bar -->
+                                            <div class="progress mb-2" style="height: 20px;">
+                                                <div class="progress-bar bg-primary project-progress-bar"
+                                                     role="progressbar"
+                                                     style="width: {{ progress[project.proj_id] if progress[project.proj_id] else 0 }}%">
+                                                    {{ progress[project.proj_id] if progress[project.proj_id] else 0 }}%
+                                                </div>
+                                            </div>
+                                            
+                                            {% if progress[project.proj_id] %}
+                                                <small class="text-success">
+                                                    <i class="fas fa-check-circle me-1"></i>
+                                                    {% if has_submitted_data %}Submitted: {{ progress[project.proj_id] }}%{% else %}Current: {{ progress[project.proj_id] }}%{% endif %}
+                                                </small>
+                                            {% else %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    No progress entered yet
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    {% if has_submitted_data %}
+                                        <div class="alert alert-info text-center">
+                                            <i class="fas fa-lock me-2"></i>
+                                            <strong>Form Locked:</strong> Your progress has been submitted and cannot be modified.
+                                            <br><strong>Total Submitted:</strong> {{ total_percentage }}%
+                                            {% if submission_date %}<br><small>Submitted on: {{ submission_date }}</small>{% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="d-flex justify-content-between">
+                                            <button type="button" class="btn btn-secondary" onclick="clearAll()">
+                                                <i class="fas fa-eraser me-2"></i>Clear All
+                                            </button>
+                                            <button type="submit" class="btn btn-success btn-lg" id="submitBtn" disabled>
+                                                <i class="fas fa-paper-plane me-2"></i>Submit Progress (Total: <span id="submitTotal">0.0</span>%)
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Active Projects</h5>
+                                <p class="text-muted">There are currently no active projects assigned.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Summary Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Progress Summary for {{ current_month }} {{ current_year }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <h3 class="text-primary">{{ projects|length }}</h3>
+                            <p class="text-muted">Total Projects</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h3 class="text-success">
+                                {{ progress.values()|list|select("greaterthan", 0)|list|length }}
+                            </h3>
+                            <p class="text-muted">Projects with Progress</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h3 class="text-info" id="averageProgress">
+                                {{ total_percentage|default(0.0) }}%
+                            </h3>
+                            <p class="text-muted">Total Submitted</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function clearAll() {
+    if (confirm('Are you sure you want to clear all progress entries?')) {
+        const inputs = document.querySelectorAll('input[name^="progress_"]');
+        inputs.forEach(input => {
+            if (!input.disabled) {
+                input.value = '';
+            }
+        });
+        updateTotalProgress();
+        updateProgressBars();
+    }
+}
+
+function updateTotalProgress() {
+    const inputs = document.querySelectorAll('.progress-input');
+    let total = 0;
+    
+    inputs.forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        total += value;
+    });
+    
+    const totalElement = document.getElementById('totalProgress');
+    const statusElement = document.getElementById('progressStatus');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitTotal = document.getElementById('submitTotal');
+    
+    if (totalElement) totalElement.textContent = total.toFixed(1) + '%';
+    if (submitTotal) submitTotal.textContent = total.toFixed(1);
+    
+    // Update styling based on total
+    if (totalElement) {
+        totalElement.className = '';
+        if (Math.abs(total - 100) < 0.01) {
+            totalElement.classList.add('text-success');
+            if (statusElement) {
+                statusElement.textContent = 'Perfect! Ready to submit';
+                statusElement.className = 'text-success';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-secondary');
+                submitBtn.classList.add('btn-success');
+            }
+        } else if (total > 100) {
+            totalElement.classList.add('text-danger');
+            if (statusElement) {
+                statusElement.textContent = 'Total exceeds 100%';
+                statusElement.className = 'text-danger';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.remove('btn-success');
+                submitBtn.classList.add('btn-secondary');
+            }
+        } else {
+            totalElement.classList.add('text-warning');
+            if (statusElement) {
+                statusElement.textContent = 'Total must equal 100%';
+                statusElement.className = 'text-warning';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.remove('btn-success');
+                submitBtn.classList.add('btn-secondary');
+            }
+        }
+    }
+    
+    // Update average in summary
+    const avgElement = document.getElementById('averageProgress');
+    if (avgElement) avgElement.textContent = total.toFixed(1) + '%';
+}
+
+function updateProgressBars() {
+    const inputs = document.querySelectorAll('.progress-input');
+    
+    inputs.forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        const progressBar = input.closest('.card').querySelector('.project-progress-bar');
+        
+        if (progressBar) {
+            progressBar.style.width = value + '%';
+            progressBar.textContent = value + '%';
+            
+            // Change color based on progress
+            progressBar.className = 'progress-bar project-progress-bar';
+            if (value >= 75) {
+                progressBar.classList.add('bg-success');
+            } else if (value >= 50) {
+                progressBar.classList.add('bg-info');
+            } else if (value >= 25) {
+                progressBar.classList.add('bg-warning');
+            } else if (value > 0) {
+                progressBar.classList.add('bg-primary');
+            } else {
+                progressBar.classList.add('bg-light');
+            }
+        }
+    });
+}
+
+// Real-time progress bar update and validation
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.progress-input');
+    const hasSubmittedData = {{ 'true' if has_submitted_data else 'false' }};
+    
+    console.log('Page loaded. Has submitted data:', hasSubmittedData);
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            console.log('Input changed:', input.name, input.value);
+            if (!hasSubmittedData) {
+                updateTotalProgress();
+                updateProgressBars();
+            }
+        });
+        
+        // Also listen for change events
+        input.addEventListener('change', function() {
+            console.log('Input change event:', input.name, input.value);
+            if (!hasSubmittedData) {
+                updateTotalProgress();
+                updateProgressBars();
+            }
+        });
+    });
+    
+    // Initialize on page load
+    console.log('Initializing progress on page load...');
+    updateTotalProgress();
+    updateProgressBars();
+    
+    // Form submission validation (only if not already submitted)
+    const form = document.getElementById('progressForm');
+    if (form && !hasSubmittedData) {
+        form.addEventListener('submit', function(e) {
+            const inputs = document.querySelectorAll('.progress-input');
+            let total = 0;
+            
+            inputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            
+            if (Math.abs(total - 100) > 0.01) {
+                e.preventDefault();
+                alert('Total work percentage must equal exactly 100%. Current total: ' + total.toFixed(1) + '%');
+            }
+        });
+    } else if (hasSubmittedData) {
+        // Disable form submission for already submitted data
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('You have already submitted your progress for this month. No further submissions allowed.');
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

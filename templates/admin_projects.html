@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - CAD Work Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_projects') }}">
+                            <i class="fas fa-project-diagram me-2"></i>Projects
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('project_analytics') }}">
+                            <i class="fas fa-chart-bar me-2"></i>Project Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_employees') }}">
+                            <i class="fas fa-users me-2"></i>Employees
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_reports') }}">
+                            <i class="fas fa-chart-bar me-2"></i>Reports
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-project-diagram me-2"></i>Project Management
+                </h1>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+                    <i class="fas fa-plus me-2"></i>Add New Project
+                </button>
+            </div>
+
+            <!-- Projects Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>All Projects
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if projects %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Project ID</th>
+                                        <th>Name</th>
+                                        <th>Client</th>
+                                        <th>Timeline</th>
+                                        <th>Status</th>
+                                        <th>Team Size</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for project in projects %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ project.proj_id }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ project.name[:40] }}{% if project.name|length > 40 %}...{% endif %}</strong>
+                                            {% if project.description %}
+                                                <br><small class="text-muted">{{ project.description[:60] }}{% if project.description|length > 60 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ project.client }}</td>
+                                        <td>
+                                            <small>
+                                                <strong>Start:</strong> {{ project.start_date }}<br>
+                                                <strong>End:</strong> {{ project.end_date }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if project.status == 'Active' %}
+                                                <span class="badge bg-success">{{ project.status }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ project.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-users me-1"></i>{{ project.team_size }}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        onclick="editProject('{{ project.proj_id }}', '{{ project.name }}', '{{ project.client }}', '{{ project.start_date }}', '{{ project.end_date }}', '{{ project.status }}', {{ project.team_size }})">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info btn-sm" 
+                                                        onclick="viewProgress('{{ project.proj_id }}')">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Projects Found</h5>
+                            <p class="text-muted">Click "Add New Project" to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Add Project Modal -->
+<div class="modal fade" id="addProjectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add New Project
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProjectForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="projId" class="form-label">Project ID</label>
+                            <input type="text" class="form-control" id="projId" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="client" class="form-label">Client</label>
+                            <input type="text" class="form-control" id="client" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Project Name</label>
+                        <input type="text" class="form-control" id="projectName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-control" id="status" required>
+                                <option value="Active">Active</option>
+                                <option value="Completed">Completed</option>
+                                <option value="On Hold">On Hold</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="teamSize" class="form-label">Team Size</label>
+                            <input type="number" class="form-control" id="teamSize" min="1" value="10" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveProject()">
+                    <i class="fas fa-save me-2"></i>Save Project
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editProject(projId, name, client, startDate, endDate, status, teamSize) {
+    alert('Edit functionality will be implemented in the next version.\n\nProject: ' + name);
+}
+
+function viewProgress(projId) {
+    alert('Progress view functionality will be implemented in the next version.\n\nProject ID: ' + projId);
+}
+
+function saveProject() {
+    alert('Add project functionality will be implemented in the next version.\n\nThis will save the project to the database.');
+    // Close modal
+    var modal = bootstrap.Modal.getInstance(document.getElementById('addProjectModal'));
+    modal.hide();
+}
+</script>
+{% endblock %}

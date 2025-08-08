@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                    <i class="fas fa-plus me-2"></i>Add New Employee
+                </button>loyees - CAD Work Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_projects') }}">
+                            <i class="fas fa-project-diagram me-2"></i>Projects
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_employees') }}">
+                            <i class="fas fa-users me-2"></i>Employees
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('employee_analytics') }}">
+                            <i class="fas fa-user-chart me-2"></i>Employee Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_reports') }}">
+                            <i class="fas fa-chart-bar me-2"></i>Reports
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-users me-2"></i>Employee Management
+                </h1>
+                <button class="btn btn-primary" onclick="alert('Add employee functionality coming soon!')">
+                    <i class="fas fa-user-plus me-2"></i>Add New Employee
+                </button>
+            </div>
+
+            <!-- Employees Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>All Employees
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if employees %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Employee ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Role</th>
+                                        <th>Type</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for employee in employees %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary">{{ employee.emp_id }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle bg-primary text-white me-2 d-flex align-items-center justify-content-center" 
+                                                     style="width: 40px; height: 40px; border-radius: 50%; font-size: 14px; font-weight: bold;">
+                                                    {{ employee.first_name[0] }}{% if employee.last_name %}{{ employee.last_name[0] }}{% endif %}
+                                                </div>
+                                                <div>
+                                                    <strong>{{ employee.first_name }} {{ employee.last_name }}</strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="mailto:{{ employee.email }}" class="text-decoration-none">
+                                                {{ employee.email }}
+                                            </a>
+                                        </td>
+                                        <td>{{ employee.department }}</td>
+                                        <td>{{ employee.role }}</td>
+                                        <td>
+                                            {% if employee.is_admin %}
+                                                <span class="badge bg-warning">Admin</span>
+                                            {% else %}
+                                                <span class="badge bg-info">Employee</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        onclick="editEmployee('{{ employee.emp_id }}')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info btn-sm" 
+                                                        onclick="viewEmployeeProgress('{{ employee.emp_id }}')">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </button>
+                                                {% if not employee.is_admin %}
+                                                <button class="btn btn-outline-warning btn-sm" 
+                                                        onclick="resetPassword('{{ employee.emp_id }}')">
+                                                    <i class="fas fa-key"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Employees Found</h5>
+                            <p class="text-muted">Click "Add New Employee" to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Employee Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">{{ employees|selectattr('is_admin', 'equalto', 0)|list|length }}</h3>
+                            <p class="text-muted mb-0">CAD Technicians</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-warning">{{ employees|selectattr('is_admin', 'equalto', 1)|list|length }}</h3>
+                            <p class="text-muted mb-0">Administrators</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success">{{ employees|length }}</h3>
+                            <p class="text-muted mb-0">Total Users</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+function editEmployee(empId) {
+    alert('Edit employee functionality will be implemented in the next version.\n\nEmployee ID: ' + empId);
+}
+
+function viewEmployeeProgress(empId) {
+    alert('Employee progress view functionality will be implemented in the next version.\n\nEmployee ID: ' + empId);
+}
+
+function resetPassword(empId) {
+    if (confirm('Are you sure you want to reset the password for this employee?')) {
+        alert('Password reset functionality will be implemented in the next version.\n\nEmployee ID: ' + empId);
+    }
+}
+</script>
+{% endblock %}
